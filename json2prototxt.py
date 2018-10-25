@@ -2,11 +2,14 @@ import sys
 import argparse
 import json
 from prototxt_basic import *
+import mxnet as mx
 
 parser = argparse.ArgumentParser(description='Convert MXNet jason to Caffe prototxt')
-parser.add_argument('--mx-json',     type=str, default='model_mxnet/face/facega2-symbol.json')
-parser.add_argument('--cf-prototxt', type=str, default='model_caffe/face/facega2.prototxt')
+parser.add_argument('--mx-json',     type=str, default='model_mxnet/vgg16-e2e-symbol.json')
+parser.add_argument('--cf-prototxt', type=str, default='model_caffe/vgg16-e2e.prototxt')
 args = parser.parse_args()
+
+sym, arg_param, aux_param = mx.model.load_checkpoint('model_mxnet/vgg16-e2e',0)
 
 with open(args.mx_json) as json_file:    
   jdata = json.load(json_file)
@@ -27,6 +30,8 @@ with open(args.cf_prototxt, "w") as prototxt_file:
     info['params'] = []
     for input_idx_i in node_i['inputs']:
       input_i = jdata['nodes'][input_idx_i[0]]
+      if str(input_i['op']) == 'Crop':
+        print("corp")
       if str(input_i['op']) != 'null' or (str(input_i['name']) == 'data'):
         info['bottom'].append(str(input_i['name']))
       if str(input_i['op']) == 'null':

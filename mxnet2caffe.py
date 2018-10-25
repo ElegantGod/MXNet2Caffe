@@ -4,10 +4,10 @@ import mxnet as mx
 import caffe
 
 parser = argparse.ArgumentParser(description='Convert MXNet model to Caffe model')
-parser.add_argument('--mx-model',    type=str, default='model_mxnet/face/facega2')
+parser.add_argument('--mx-model',    type=str, default='model_mxnet/vgg16-e2e')
 parser.add_argument('--mx-epoch',    type=int, default=0)
-parser.add_argument('--cf-prototxt', type=str, default='model_caffe/face/facega2.prototxt')
-parser.add_argument('--cf-model',    type=str, default='model_caffe/face/facega2.caffemodel')
+parser.add_argument('--cf-prototxt', type=str, default='model_caffe/vgg16-e2e.prototxt')
+parser.add_argument('--cf-model',    type=str, default='model_caffe/vgg16-e2e.caffemodel')
 args = parser.parse_args()
 
 # ------------------------------------------
