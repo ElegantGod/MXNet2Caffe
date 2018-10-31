@@ -32,7 +32,7 @@ def Convolution(txt_file, info):
     #pprint.pprint(info)  
   if fuzzy_haskey(info['params'], 'bias'):
     bias_term = 'true'  
-  elif info[attrstr].has_key('no_bias') and info['attrs']['no_bias'] == 'True':
+  elif info[attrstr].has_key('no_bias') and info[attrstr]['no_bias'] == 'True':
     bias_term = 'false'  
   else:
     bias_term = 'true'
@@ -201,6 +201,102 @@ def Eltwise(txt_file, info, op):
   txt_file.write('}\n')
   txt_file.write('\n')  
 
+def Reshape(txt_file, info):
+  txt_file.write('layer {\n')
+  txt_file.write('  type: "Reshape"\n')
+  txt_file.write('  top: "%s"\n'        %info['top'])
+  txt_file.write('  name: "%s"\n'        %info['top'])
+  for btom in info['bottom']:
+    txt_file.write('  bottom: "%s"\n'        %btom)
+  txt_file.write('  reshape_param { shape {')
+  for dim in info['attrs']['shape'].replace(',','').strip('(').strip(')').strip('/,').split(' '):
+    txt_file.write('  dim: %s' %dim)
+  txt_file.write('} }\n')
+  txt_file.write('}\n')
+  txt_file.write('\n')
+def SoftmaxActivation(txt_file, info):
+  txt_file.write('layer {\n')
+  txt_file.write('  type: "Softmax"\n')
+  txt_file.write('  top: "%s"\n' % info['top'])
+  txt_file.write('  name: "%s"\n' % info['top'])
+  for btom in info['bottom']:
+    txt_file.write('  bottom: "%s"\n' % btom)
+  txt_file.write('}\n')
+  txt_file.write('\n')
+def Crop(txt_file, info):
+  txt_file.write('layer {\n')
+  txt_file.write('  type: "Crop"\n')
+  txt_file.write('  top: "%s"\n' % info['top'])
+  txt_file.write('  name: "%s"\n' % info['top'])
+  for btom in info['bottom']:
+    txt_file.write('  bottom: "%s"\n' % btom)
+  txt_file.write('  crop_param { axis: 2 offset: 0}\n')
+  txt_file.write('}\n')
+  txt_file.write('\n')
+def Deconvolution(txt_file, info):
+  #if info['attrs']['no_bias'] == 'True':
+    #bias_term = 'false'
+  #else:
+    #bias_term = 'true'
+  #if info['top'] == 'conv1_1':
+    #pprint.pprint(info)
+  if fuzzy_haskey(info['params'], 'bias'):
+    bias_term = 'true'
+  elif info[attrstr].has_key('no_bias') and info['attrs']['no_bias'] == 'True':
+    bias_term = 'false'
+  else:
+    bias_term = 'true'
+  txt_file.write('layer {\n')
+  txt_file.write('	bottom: "%s"\n'       % info['bottom'][0])
+  txt_file.write('	top: "%s"\n'          % info['top'])
+  txt_file.write('	name: "%s"\n'         % info['top'])
+  txt_file.write('	type: "Convolution"\n')
+  txt_file.write('	convolution_param {\n')
+  txt_file.write('		num_output: %s\n'   % info[attrstr]['num_filter'])
+  txt_file.write('		kernel_size: %s\n'  % info[attrstr]['kernel'].split('(')[1].split(',')[0]) # TODO
+  if info[attrstr].has_key('pad'):
+    txt_file.write('		pad: %s\n'          % info[attrstr]['pad'].split('(')[1].split(',')[0]) # TODO
+  if info[attrstr].has_key('num_group'):
+    txt_file.write('		group: %s\n'        % info[attrstr]['num_group'])
+  if info[attrstr].has_key('stride'):
+    txt_file.write('		stride: %s\n'       % info[attrstr]['stride'].split('(')[1].split(',')[0])
+  txt_file.write('		bias_term: %s\n'    % bias_term)
+  txt_file.write('	}\n')
+  if 'share' in info.keys() and info['share']:
+    txt_file.write('	param {\n')
+    txt_file.write('	  name: "%s"\n'     % info['params'][0])
+    txt_file.write('	}\n')
+  txt_file.write('}\n')
+  txt_file.write('\n')
+def Dropout(txt_file, info):
+  txt_file.write('layer {\n')
+  txt_file.write('  type: "Dropout"\n')
+  txt_file.write('  top: "%s"\n' % info['top'])
+  txt_file.write('  name: "%s"\n' % info['top'])
+  for btom in info['bottom']:
+    txt_file.write('  bottom: "%s"\n' % btom)
+  txt_file.write('  dropout_param { dropout_ratio: %s}\n'%info[attrstr]["p"])
+  txt_file.write('}\n')
+  txt_file.write('\n')
+def L2Normalization(txt_file, info):
+  txt_file.write('layer {\n')
+  txt_file.write('  type: "Normalize"\n')
+  txt_file.write('  top: "%s"\n' % info['top'])
+  txt_file.write('  name: "%s"\n' % info['top'])
+  for btom in info['bottom']:
+    txt_file.write('  bottom: "%s"\n' % btom)
+  if info[attrstr].has_key("mode"):
+    if info[attrstr]["mode"] == "instance":
+      txt_file.write('  norm_param {\n')
+      txt_file.write('    across_spatial: True\n')
+      txt_file.write('    channel_shared: False\n')
+      txt_file.write('  }\n')
+    else:
+      print("bn Normalization with %s is not supported\n")
+
+
+  txt_file.write('}\n')
+  txt_file.write('\n')
 # ----------------------------------------------------------------
 def write_node(txt_file, info):
     if 'label' in info['name']:
@@ -233,6 +329,18 @@ def write_node(txt_file, info):
         LeakyReLU(txt_file, info)
     elif info['op'] == 'elemwise_add':
         ElementWiseSum(txt_file, info)
+    elif info['op'] == 'Reshape':
+        Reshape(txt_file, info)
+    elif info['op'] == 'SoftmaxActivation':
+        SoftmaxActivation(txt_file, info)
+    elif info['op'] == "Crop":
+        Crop(txt_file, info)
+    elif info['op'] == "Deconvolution":
+        Deconvolution(txt_file, info)
+    elif info['op'] == "Dropout":
+        Dropout(txt_file, info)
+    elif info['op'] == "L2Normalization":
+      L2Normalization(txt_file, info)
     else:
         #pprint.pprint(info)
         #sys.exit("Warning!  Unknown mxnet op:{}".format(info['op']))

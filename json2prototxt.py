@@ -5,16 +5,16 @@ from prototxt_basic import *
 import mxnet as mx
 
 parser = argparse.ArgumentParser(description='Convert MXNet jason to Caffe prototxt')
-parser.add_argument('--mx-json',     type=str, default='model_mxnet/vgg16-e2e-symbol.json')
-parser.add_argument('--cf-prototxt', type=str, default='model_caffe/vgg16-e2e.prototxt')
+parser.add_argument('--json',     type=str, default='model_mxnet/insightface_r100-symbol.json')
+parser.add_argument('--prototxt', type=str, default='model_caffe/insightface_r100.prototxt')
 args = parser.parse_args()
 
-sym, arg_param, aux_param = mx.model.load_checkpoint('model_mxnet/vgg16-e2e',0)
+# sym, arg_param, aux_param = mx.model.load_checkpoint('model_mxnet/vgg16-e2e',0)
 
-with open(args.mx_json) as json_file:    
+with open(args.json) as json_file:
   jdata = json.load(json_file)
 
-with open(args.cf_prototxt, "w") as prototxt_file:
+with open(args.prototxt, "w") as prototxt_file:
   for i_node in range(0,len(jdata['nodes'])):
     node_i    = jdata['nodes'][i_node]
     if str(node_i['op']) == 'null' and str(node_i['name']) != 'data':
